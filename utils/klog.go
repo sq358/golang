@@ -47,3 +47,38 @@ func Init(logfile string) {
 func TimeStamp() string {
 	return time.Now().UTC().Format(TimeFormat)
 }
+
+func publishMetric(c *cloudwatch.CloudWatch, ml []*cloudwatch.MetricDatum) (*cloudwatch.PutMetricDataOutput, error) {
+	i := cloudwatch.PutMetricDataInput{}
+
+	i.SetMetricData(ml)
+	i.SetNamespace(namespace)
+
+	out, err := c.PutMetricData(&i)
+
+	if err != nil {
+		klog.LOGGER.Debug(
+			"Publish Metric Data Failed",
+			zap.String("TimeStamp", klog.TimeStamp()),
+			zap.String(
+				"Metric Input",
+				fmt.Sprintf("%+v", i),
+			),
+			zap.Error(err),
+		)
+
+		return nil, errors.New("Publish Metric to CloudWatch Failed")
+	}
+
+	klog.LOGGER.Info(
+		"Publish Metric Data Succeeded",
+		zap.String("TimeStamp", klog.TimeStamp()),
+		zap.String(
+			"Output",
+			fmt.Sprintf("%+v", *out),
+		),
+		zap.Error(err),
+	)
+
+	return out, nil
+}
